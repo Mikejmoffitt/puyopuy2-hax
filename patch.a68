@@ -1,0 +1,12 @@
+; AS configuration and original binary file to patch over
+	CPU 68000
+	PADDING OFF
+	ORG		$000000
+	BINCLUDE	"prg.orig"
+
+	INCLUDE		"protection.a68"
+	INCLUDE		"sound.a68"
+
+; Enable debug option in test menu
+	ORG	$002AF6
+	dc.b	$09

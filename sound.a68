@@ -1,0 +1,143 @@
+; Sound-related hacks.
+; =============================================================================
+
+SOUND_DATA_BASE = $048000
+SOUND_DATA_FREE = $04F106
+SOUND_CUE_OFFSETS = $049284
+
+TRACK_DATA_LOC := SOUND_DATA_FREE
+NEXT_TRACK_DATA_LOC := TRACK_DATA_LOC
+
+; Sound randomization / selection for VS mode
+; =============================================================================
+;
+; In the sound test, the ID listed is not the actual ID as far as the engine
+; is concerned. A lookup table at $29FC translates from menu ID to engine ID.
+; Engine Sound cues of note:
+; $00 = pause sound
+; $01 = game over music
+; $02 = victory of puyo puyo (from first game)
+; $03 = round win
+; $04 = menu music
+; $05 = how to play music
+; $06 = opening music
+; $07 = ending C
+; $08 = "quickly difficult" area D
+; $09 = menu music again
+; $0A = "steady, steady" area B
+; $0B = pause sound again
+; $0C = "darkness" area C
+; $0D = warning
+; $0E = staff roll
+; $0F = ending theme
+; $10 = menu blip
+; $11 = menu blip 2
+
+; TODO: I'm still stuck on this one, tracing back where the sound cue is
+; selected for VS mode.
+
+; Sound engine notes:
+;
+; FM Channel states start at FF9900 and are 24 bytes each.
+
+; $0A.l: Pointer to compiled MML data
+; $28.b: Delay counter
+; $29.b: Delay counter max - 1 (intended delay duration)
+
+; Instructions:
+
+; $80 : unconditional jump (DATA_BASE relative)
+
+; $Ex : set speed division (e3 is default for sticker of puyo puyo drum line, e2 makes it faster, etc.
+
+; in the bass line, $Cx triggers a few notes...
+
+; $C6 = bass drum
+; $C4 = closed hihat
+; $C1 = snare
+
+; Music
+; =============================================================================
+;
+; Sound data format:
+; $00.b: # Channels used. Usually $06
+; $01.b: optional padding. Absent if data at $00 is oddly aligned.
+; { struct placed $00.b times, one per channel }
+; $02.b: starting channel #?
+; $03.b: Copied to $03 in channel state
+; $04.l: Copied to $04 in channel state
+; $08.w: Copied to $08 in channel staet
+; $0A.w: Offset from SOUND_DATA_BASE for track data
+; $0C.w: Copied to $E in channel state
+; ...
+
+; Adding new tracks
+; =============================================================================
+; Track data starts at SOUND_DATA_BASE, and the data itself indicates where the
+; channel data begins using an offset from the sound data base. So, track data
+; has to be rebased if it is relocated.
+;
+; When a track is loaded, SOUND_CUE_OFFSETS is indexed by (id << 1) to find the
+; start address relative to SOUND_DATA_BASE. SOUND_CUE_OFFSETS itself occupies
+; some space within SOUND_DATA_BASE, but there are unused slots from $0492A6 to
+; $0492C4 (they all point to the menu blip).
+
+; Puyo 1 and 2 both aligned to a "word-page" so the channel data offset will
+; depend on the position of the track within the sound data blob.
+
+; "Sticker of Puyo Puyo" is based at +$2304.
+
+; "Sticker of Puyo Puyo" sound data offsets:
+; orig  - base  = assemble loc offset
+; ==========================================
+; $234E - $2304 = $4A
+; $251A - $2304 = $216
+; $2611 - $2304 = $30D
+; $27E1 - $2304 = $4DD
+; $29F3 - $2304 = $6EF
+; $260D - $2304 = $309?
+
+
+; Bring in Sticker of Puyo Puyo.
+; -----------------------------------------------------------------------------
+	ORG		NEXT_TRACK_DATA_LOC
+	BINCLUDE	"sound/sticker.bin"
+	align	2
+NEXT_TRACK_DATA_LOC := *
+
+	; Rebase channel data start points.
+	ORG	TRACK_DATA_LOC + $0A
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $004A
+	ORG	TRACK_DATA_LOC + $16
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $0216
+	ORG	TRACK_DATA_LOC + $22
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $030D
+	ORG	TRACK_DATA_LOC + $2E
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $04DD
+	ORG	TRACK_DATA_LOC + $3A
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $06EF
+	ORG	TRACK_DATA_LOC + $46
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $0309
+
+	; Point to Sticker of Puyo Puyo in the cue table.
+	ORG	SOUND_CUE_OFFSETS + $30
+	dc.w	TRACK_DATA_LOC - SOUND_DATA_BASE
+
+	; Rebase early loop point of the bassline.
+	ORG	TRACK_DATA_LOC + $240
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $0219
+
+	; Rebase unconditional jump at the end of each channel.
+	ORG	TRACK_DATA_LOC + $214
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $004A
+	ORG	TRACK_DATA_LOC + $307
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $0216
+	ORG	TRACK_DATA_LOC + $4DB
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $030D
+	ORG	TRACK_DATA_LOC + $6ED
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $04DD
+	ORG	TRACK_DATA_LOC + $8FB
+	dc.w	(TRACK_DATA_LOC - SOUND_DATA_BASE) + $06EF
+	; The last channel operates on a delayed playback of channel 3.
+
+TRACK_DATA_LOC := NEXT_TRACK_DATA_LOC

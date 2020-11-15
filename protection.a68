@@ -1,0 +1,25 @@
+; ROM integrity and copy protection
+; =============================================================================
+
+ProtectionIntegrityBad = $FFA0B3
+
+; Disable EPM protection check
+	ORG	$000D86
+	rts
+
+; Disable protection check check
+	ORG	$00EE90  ; End of 1P round
+	nop
+	nop
+
+	ORG	$00DDF6  ; End of 2P round
+	nop
+	nop
+
+; Juuuuuust in case, don't even set the protection fail flag.
+	ORG	$01B0B4
+	move.b	#0, (ProtectionIntegrityBad).l
+	rts
+
+; Misc.
+; =============================================================================
