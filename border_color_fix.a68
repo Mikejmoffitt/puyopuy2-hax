@@ -1,0 +1,15 @@
+; Use color $20 instead of $00 for the border.
+; A bunch of tables referenced at $000C74 contain initial VDP reg values.
+; Register 7 is the border color index.
+; TODO:Being C2, can we reference colors beyond $3F?
+
+BORDER_COLOR = $20
+
+tbledit	macro	addr
+	ORG	(addr + 7)
+	dc.b	BORDER_COLOR
+	endm
+
+	; TODO: Need to solve the background being black on this screen.
+;	tbledit	$CDC
+

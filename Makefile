@@ -25,15 +25,26 @@ prg.bin: prg.o
 	rm prg.o
 
 puyopuy2: prg.bin
-	mkdir -p out
-	$(BSPLIT) s prg.bin out/epr-17241.ic32 out/epr-17240.ic31
-	cp data/epr-17239.ic4 out/
+	mkdir -p $@
+	$(BSPLIT) s prg.bin $@/epr-17241.ic32 $@/epr-17240.ic31
+	cp data/epr-17239.ic4 $@/
+
+zunkyou: puyopuy2
+	mkdir -p $@
+	cp $</epr-17241.ic32 $@/epr-16812.ic32
+	cp $</epr-17241.ic32 $@/epr-16814.ic34
+	cp $</epr-17240.ic31 $@/epr-16811.ic31
+	cp $</epr-17240.ic31 $@/epr-16813.ic33
+	cp $</epr-17239.ic4 $@/epr-16810.ic4
 
 test: puyopuy2
-	mkdir -p puyopuy2
-	cp out/* puyopuy2
-	$(MAME) -rompath $(shell pwd) -debug puyopuy2
+	$(MAME) -rompath $(shell pwd) -debug $<
+
+testz: zunkyou
+	$(MAME) -rompath $(shell pwd) -debug $<
 
 clean:
 	@-rm -f prg.bin
 	@-rm -f prg.o
+	@-rm -rf puyopuy2
+	@-rm -rf zunkyou

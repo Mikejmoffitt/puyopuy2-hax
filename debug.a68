@@ -1,0 +1,3 @@
+; Enable debug option in test menu
+	ORG	$002AF6
+	dc.b	$09

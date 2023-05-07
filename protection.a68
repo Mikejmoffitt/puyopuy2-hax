@@ -5,6 +5,12 @@ ProtectionIntegrityBad = $FFA0B3
 
 ; Disable EPM protection check
 	ORG	$000D86
+	clr.b	$5810(a4)  ; Clear protection failure flag.
+	rts
+
+; Second protection check
+	ORG	$018894
+	clr.b	$5810(a4)
 	rts
 
 ; Disable protection check check
@@ -18,8 +24,6 @@ ProtectionIntegrityBad = $FFA0B3
 
 ; Juuuuuust in case, don't even set the protection fail flag.
 	ORG	$01B0B4
-	move.b	#0, (ProtectionIntegrityBad).l
+	clr.b	ProtectionIntegrityBad
 	rts
 
-; Misc.
-; =============================================================================

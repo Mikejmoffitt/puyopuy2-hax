@@ -6,7 +6,5 @@
 
 	INCLUDE		"protection.a68"
 	INCLUDE		"sound.a68"
-
-; Enable debug option in test menu
-	ORG	$002AF6
-	dc.b	$09
+	INCLUDE		"debug.a68"
+	INCLUDE		"border_color_fix.a68"
